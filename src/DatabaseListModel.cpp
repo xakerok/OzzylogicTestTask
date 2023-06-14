@@ -33,7 +33,14 @@ bool DatabaseListModel::setData(const QModelIndex &index, const QVariant &value,
 
     emit dataChanged(index, index, QVector<int>({NameRole}));
 
-    return true;
+    QSqlQuery query(QString("UPDATE operators SET name='%1' WHERE mcc == %2 AND mnc == %3")
+                        .arg(value.toString(), item->data("mcc").toString(), item->data("mnc").toString()),
+                    m_database);
+
+    auto res = query.exec();
+    Q_ASSERT(res);
+
+    return res;
 }
 
 int DatabaseListModel::rowCount(const QModelIndex &parent) const
@@ -84,6 +91,16 @@ void DatabaseListModel::addItem(int mcc, int mnc, const QString &name)
             beginInsertRows(index(i), country->childCount(), country->childCount());
             country->appendChild(new DatabaseListModelItem(operatorData, country));
             endInsertRows();
+
+            m_database.transaction();
+
+            QSqlQuery query(QString("INSERT INTO operators (mcc, mnc, name) VALUES ('%1', '%2', '%3')")
+                                .arg(QString::number(mcc), QString::number(mnc), name),
+                            m_database);
+            if (query.exec())
+                m_database.commit();
+            else
+                qInfo() << m_database.lastError();
         }
     }
 }

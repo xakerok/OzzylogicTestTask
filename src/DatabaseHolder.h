@@ -7,6 +7,7 @@ class DatabaseHolder : public QObject
 {
     Q_OBJECT
 public:
+    ~DatabaseHolder();
     static DatabaseHolder& getInstance();
 
     QSqlDatabase getDatabase() const;

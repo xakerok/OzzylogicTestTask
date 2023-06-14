@@ -5,6 +5,11 @@
 #include <QSqlError>
 #include <QFile>
 
+DatabaseHolder::~DatabaseHolder()
+{
+    m_database.close();
+}
+
 DatabaseHolder &DatabaseHolder::getInstance()
 {
     static QScopedPointer<DatabaseHolder> holder(new DatabaseHolder);
