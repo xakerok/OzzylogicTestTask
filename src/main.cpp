@@ -2,6 +2,7 @@
 #include "DatabaseHolder.h"
 
 #include <QApplication>
+#include <QMessageBox>
 
 int main(int argc, char *argv[])
 {
@@ -9,7 +10,10 @@ int main(int argc, char *argv[])
 
     // init database before window creation
     if (!DatabaseHolder::getInstance().init())
-        return 1;
+    {
+        QMessageBox::critical(nullptr, "OperatorEditor", "Database was not initialized");
+        return 0;
+    }
 
     MainWindow w;
     w.show();

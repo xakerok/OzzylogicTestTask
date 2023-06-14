@@ -9,6 +9,9 @@ Dialog::Dialog(QWidget *parent) : QDialog(parent), ui(new Ui::Dialog)
 {
     ui->setupUi(this);
 
+    setWindowModality(Qt::ApplicationModal);
+    setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
+
     connect(ui->saveButton, &QPushButton::clicked, this, &QDialog::accept);
     connect(ui->cancelButton, &QPushButton::clicked, this, &QDialog::reject);
 
@@ -34,8 +37,11 @@ void Dialog::setDatabaseModel(const DatabaseListModel *model)
     connect(ui->lineEditMCC, &QLineEdit::textChanged, this,
             [this](const QString &text)
             {
-                auto code = m_model->getCode(text.toInt());
-                ui->flagImageLabel->setPixmap(QPixmap(QString(":/icons/Countries/%1.png").arg(code)));
+                auto path = QString(":/icons/Countries/%1.png").arg(m_model->getCode(text.toInt()));
+                if (QFile::exists(path))
+                    ui->flagImageLabel->setPixmap(QPixmap(path));
+                else
+                    ui->flagImageLabel->clear();
             });
 }
 
