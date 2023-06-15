@@ -5,9 +5,6 @@
 
 #include "DatabaseListModelItem.h"
 
-class QSqlQueryModel;
-class QSqlTableModel;
-
 enum Roles
 {
     IdRole = Qt::UserRole + 1,

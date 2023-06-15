@@ -3,8 +3,6 @@
 #include <QSqlQuery>
 #include <QSqlResult>
 #include <QSqlError>
-#include <QSqlQueryModel>
-#include <QSqlTableModel>
 #include <QSqlRecord>
 
 #include <QDebug>
@@ -33,11 +31,10 @@ bool DatabaseListModel::setData(const QModelIndex &index, const QVariant &value,
 
     emit dataChanged(index, index, QVector<int>({NameRole}));
 
-    QSqlQuery query(QString("UPDATE operators SET name='%1' WHERE mcc == %2 AND mnc == %3")
-                        .arg(value.toString(), item->data("mcc").toString(), item->data("mnc").toString()),
-                    m_database);
+    QSqlQuery query(m_database);
 
-    auto res = query.exec();
+    auto res = query.exec(QString("UPDATE operators SET name='%1' WHERE mcc == %2 AND mnc == %3")
+                              .arg(value.toString(), item->data("mcc").toString(), item->data("mnc").toString()));
     Q_ASSERT(res);
 
     return res;
@@ -92,15 +89,12 @@ void DatabaseListModel::addItem(int mcc, int mnc, const QString &name)
             country->appendChild(new DatabaseListModelItem(operatorData, country));
             endInsertRows();
 
-            m_database.transaction();
-
-            QSqlQuery query(QString("INSERT INTO operators (mcc, mnc, name) VALUES ('%1', '%2', '%3')")
-                                .arg(QString::number(mcc), QString::number(mnc), name),
-                            m_database);
-            if (query.exec())
-                m_database.commit();
-            else
+            auto queryString = QString("INSERT INTO 'operators' (mcc, mnc, name) VALUES ('%1', '%2', '%3')")
+                                   .arg(QString::number(mcc), QString::number(mnc), name);
+            QSqlQuery query(m_database);
+            if (!query.exec(queryString))
                 qInfo() << m_database.lastError();
+            query.clear();
         }
     }
 }
@@ -120,8 +114,8 @@ void DatabaseListModel::setupModelData()
 {
     m_rootItem = new DatabaseListModelItem({});
 
-    QSqlQuery query("SELECT * FROM countries", m_database);
-    bool res = query.exec();
+    QSqlQuery query(m_database);
+    bool res = query.exec("SELECT * FROM countries");
     Q_ASSERT(res);
 
     while (query.next())
@@ -134,8 +128,8 @@ void DatabaseListModel::setupModelData()
 
         auto country = new DatabaseListModelItem(data, m_rootItem);
 
-        QSqlQuery operatorsQuery("SELECT * from 'operators' WHERE mcc == " + QString::number(mcc));
-        res = operatorsQuery.exec();
+        QSqlQuery operatorsQuery(m_database);
+        res = operatorsQuery.exec("SELECT * from 'operators' WHERE mcc == " + QString::number(mcc));
         Q_ASSERT(res);
         while (operatorsQuery.next())
         {
